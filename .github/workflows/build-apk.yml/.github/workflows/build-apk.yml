@@ -5,6 +5,7 @@ name: Build RIWAQ APK
 
 on:
   workflow_dispatch:
+  repository_dispatch:
   push:
     paths:
       - 'RIWAQ-Android-Studio-v1.zip'
