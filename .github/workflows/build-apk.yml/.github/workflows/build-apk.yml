@@ -1,4 +1,6 @@
 
+          
+
 name: Build RIWAQ APK
 
 on:
@@ -19,7 +21,7 @@ jobs:
       - name: Extract Android project
         run: |
           unzip -q RIWAQ-Android-Studio-v1.zip -d extracted
-          ls -la extracted/riwaq-android
+          find extracted -type f \( -name "settings.gradle.kts" -o -name "settings.gradle" \)
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -32,7 +34,7 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -40,13 +42,19 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build RIWAQ APK
-        working-directory: extracted/riwaq-android
-        run: gradle assembleDebug
+        run: |
+          SETTINGS_FILE=$(find extracted -type f \( -name "settings.gradle.kts" -o -name "settings.gradle" \) | head -n 1)
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "Android project settings file not found"
+            exit 1
+          fi
+          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
+          cd "$PROJECT_DIR"
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: RIWAQ-APK
-          path: extracted/riwaq-android/app/build/outputs/apk/debug/app-debug.apk
+          path: extracted/**/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          
